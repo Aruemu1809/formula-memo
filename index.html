@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公式メモ帳</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 1em;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      font-size: 1.5em;
+      color: #333;
+    }
+    textarea, input, button {
+      width: 100%;
+      margin: 0.5em 0;
+      padding: 0.5em;
+      font-size: 1em;
+    }
+    .formula {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 0.5em;
+      padding: 1em;
+      margin-bottom: 1em;
+      position: relative;
+    }
+    .math-button {
+      display: inline-block;
+      margin: 0.2em;
+      padding: 0.4em 0.6em;
+      background-color: #ddd;
+      border: none;
+      border-radius: 0.3em;
+      cursor: pointer;
+    }
+    .edit-btn, .delete-btn {
+      position: absolute;
+      top: 0.5em;
+      right: 2em;
+      font-size: 0.8em;
+      background-color: #ccc;
+      border: none;
+      padding: 0.2em 0.5em;
+      margin-left: 0.5em;
+      cursor: pointer;
+    }
+    .delete-btn {
+      right: 0.5em;
+      background-color: #f88;
+    }
+  </style>
+</head>
+<body>
+  <h1>公式メモ帳 📘</h1>
+  <div>
+    <label for="formulaInput">公式を入力：</label>
+    <textarea id="formulaInput" rows="3"></textarea>
+    <div id="mathButtons">
+      <button class="math-button" onclick="insertSymbol('π')">π</button>
+      <button class="math-button" onclick="insertSymbol('√')">√</button>
+      <button class="math-button" onclick="insertSymbol('∑')">∑</button>
+      <button class="math-button" onclick="insertSymbol('∫')">∫</button>
+      <button class="math-button" onclick="insertSymbol('∞')">∞</button>
+      <button class="math-button" onclick="insertSymbol('Δ')">Δ</button>
+      <button class="math-button" onclick="insertSymbol('θ')">θ</button>
+      <button class="math-button" onclick="insertSymbol('≠')">≠</button>
+      <button class="math-button" onclick="insertSymbol('≤')">≤</button>
+      <button class="math-button" onclick="insertSymbol('≥')">≥</button>
+      <button class="math-button" onclick="insertSymbol('²')">x²</button>
+      <button class="math-button" onclick="insertSymbol('³')">x³</button>
+      <button class="math-button" onclick="insertSymbol('⁴')">x⁴</button>
+    </div>
+    <button onclick="addFormula()">保存</button>
+  </div>
+  <h2>保存した公式</h2>
+  <div id="formulaList"></div>
+
+  <script>
+    const formulaInput = document.getElementById("formulaInput");
+    const formulaList = document.getElementById("formulaList");
+
+    function insertSymbol(symbol) {
+      const start = formulaInput.selectionStart;
+      const end = formulaInput.selectionEnd;
+      const text = formulaInput.value;
+      formulaInput.value = text.slice(0, start) + symbol + text.slice(end);
+      formulaInput.focus();
+      formulaInput.selectionStart = formulaInput.selectionEnd = start + symbol.length;
+    }
+
+    function addFormula() {
+      const formula = formulaInput.value.trim();
+      if (!formula) return;
+      createFormulaElement(formula);
+      formulaInput.value = "";
+      saveFormulas();
+    }
+
+    function createFormulaElement(text) {
+      const div = document.createElement("div");
+      div.className = "formula";
+      const span = document.createElement("span");
+      span.textContent = text;
+
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "編集";
+      editBtn.className = "edit-btn";
+      editBtn.onclick = () => {
+        const newText = prompt("式を編集：", span.textContent);
+        if (newText !== null) {
+          span.textContent = newText;
+          saveFormulas();
+        }
+      };
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "削除";
+      deleteBtn.className = "delete-btn";
+      deleteBtn.onclick = () => {
+        formulaList.removeChild(div);
+        saveFormulas();
+      };
+
+      div.appendChild(span);
+      div.appendChild(editBtn);
+      div.appendChild(deleteBtn);
+      formulaList.appendChild(div);
+    }
+
+    function saveFormulas() {
+      const formulas = Array.from(document.querySelectorAll('.formula span')).map(f => f.textContent);
+      localStorage.setItem('formulas', JSON.stringify(formulas));
+    }
+
+    function loadFormulas() {
+      const saved = JSON.parse(localStorage.getItem('formulas') || '[]');
+      for (const f of saved) {
+        createFormulaElement(f);
+      }
+    }
+
+    loadFormulas();
+
+    // PWA: Service Worker 登録
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
